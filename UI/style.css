@@ -1,0 +1,178 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Inter, Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    padding: 32px;
+}
+
+
+header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 32px;
+}
+
+h1 {
+
+    font-size: 2rem;
+
+    margin-bottom: 6px;
+}
+
+header p {
+
+    color: #94a3b8;
+
+    font-size: 14px;
+}
+
+.status {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px 14px;
+
+    background: #1e293b;
+
+    border-radius: 999px;
+
+    font-size: 14px;
+}
+
+.dot {
+
+    width: 10px;
+
+    height: 10px;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+
+    0% {
+
+        opacity: 1;
+    }
+
+    50% {
+
+        opacity: .3;
+    }
+
+    100% {
+
+        opacity: 1;
+    }
+}
+
+
+.grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 24px;
+}
+
+.card {
+
+    background: #1e293b;
+
+    border-radius: 16px;
+
+    overflow: hidden;
+
+    border: 1px solid #334155;
+
+    transition: .25s;
+}
+
+.card:hover {
+
+    transform: translateY(-4px);
+
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.card-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 14px 18px;
+
+    background: #172033;
+
+    font-weight: 600;
+
+    border-bottom: 1px solid #334155;
+}
+
+.card-header::after {
+
+    content: "LIVE";
+
+    color: #22c55e;
+
+    font-size: 12px;
+
+    font-weight: bold;
+}
+
+video {
+
+    width: 100%;
+
+    aspect-ratio: 16 / 9;
+
+    background: black;
+
+    display: block;
+
+    object-fit: cover;
+}
+
+
+@media (max-width:900px){
+
+.grid{
+
+grid-template-columns:1fr;
+
+}
+
+header{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:20px;
+
+}
+
+}

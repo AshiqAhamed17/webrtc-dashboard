@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Camera Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>Live Camera Dashboard</h1>
+            <p>MediaMTX • WebRTC • FFmpeg</p>
+        </div>
+
+        <div class="status">
+            <span class="dot"></span>
+            Live
+        </div>
+    </header>
+
+    <div class="grid">
+
+        <div class="card">
+            <div class="card-header">
+                <span>Camera 1</span>
+            </div>
+            <video id="cam1" autoplay muted playsinline></video>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>Camera 2</span>
+            </div>
+            <video id="cam2" autoplay muted playsinline></video>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>Camera 3</span>
+            </div>
+            <video id="cam3" autoplay muted playsinline></video>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>Camera 4</span>
+            </div>
+            <video id="cam4" autoplay muted playsinline></video>
+        </div>
+
+    </div>
+
+    <script src="reader.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>

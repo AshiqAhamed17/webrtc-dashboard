@@ -1,0 +1,12 @@
+.DS_Store
+
+.env
+
+.vscode/
+
+node_modules/
+
+*.log
+
+sampleVid.mp4
+
