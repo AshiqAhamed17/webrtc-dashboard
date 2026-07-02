@@ -62,7 +62,6 @@ webrtc-dashboard/
 ![Dashboard](assets/dashboard.png)
 
 
-
 ## Implementation Steps
 
 ### 1. Setup MediaMTX

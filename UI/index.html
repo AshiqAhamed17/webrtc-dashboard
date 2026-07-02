@@ -5,58 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebRTC Camera Dashboard</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <header>
+    <header class="dashboard-header">
         <div>
             <h1>Live Camera Dashboard</h1>
-            <p>MediaMTX • WebRTC • FFmpeg</p>
+            <p class="dashboard-header__sub">MediaMTX &bull; WebRTC &bull; FFmpeg</p>
         </div>
-
-        <div class="status">
-            <span class="dot"></span>
-            Live
+        <div class="dashboard-header__stats">
+            <div class="header-stat">
+                <span class="header-stat__label">Active</span>
+                <span class="header-stat__value" id="stat-active">0 / 4</span>
+            </div>
+            <div class="header-stat">
+                <span class="header-stat__label">Total Reconnects</span>
+                <span class="header-stat__value" id="stat-reconnects">0</span>
+            </div>
         </div>
     </header>
 
-    <div class="grid">
-
-        <div class="card">
-            <div class="card-header">
-                <span>Camera 1</span>
-            </div>
-            <video id="cam1" autoplay muted playsinline></video>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <span>Camera 2</span>
-            </div>
-            <video id="cam2" autoplay muted playsinline></video>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <span>Camera 3</span>
-            </div>
-            <video id="cam3" autoplay muted playsinline></video>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <span>Camera 4</span>
-            </div>
-            <video id="cam4" autoplay muted playsinline></video>
-        </div>
-
-    </div>
+    <main id="grid" class="grid"></main>
 
     <script src="reader.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=4"></script>
 
 </body>
 
