@@ -10,4 +10,9 @@ node_modules/
 
 sampleVid.mp4
 
+# Camera config contains RTSP credentials — copy from cameras.json.example
 cameras.json
+UI/cameras.json
+
+# Generated from cameras.json — contains RTSP credentials
+mediamtx.yml
