@@ -1,3 +1,12 @@
 paths:
-  live:
+  demo:
     source: publisher
+  cam1:
+    source: rtsp://admin:cctv%401234@bbshoplazamerdeka.lifestyle-malaysia.com:554/streaming/channels/0202
+    sourceOnDemand: yes
+  cam2:
+    source: rtsp://admin:cctv%401234@bbshoplazamerdeka.lifestyle-malaysia.com:554/streaming/channels/0402
+    sourceOnDemand: yes
+  cam3:
+    source: rtsp://admin:cctv%408817@babyshopavenuekampang.lifestyle-malaysia.com:554/streaming/channels/201
+    sourceOnDemand: yes

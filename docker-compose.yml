@@ -2,6 +2,7 @@ services:
   mediamtx:
     image: bluenviron/mediamtx:latest
     container_name: mediamtx
+    restart: unless-stopped
 
     ports:
       - "8554:8554"
@@ -15,6 +16,7 @@ services:
   ffmpeg:
     image: jrottenberg/ffmpeg:latest
     container_name: ffmpeg
+    restart: unless-stopped
 
     depends_on:
       - mediamtx
@@ -22,6 +24,7 @@ services:
     volumes:
       - ./:/videos
 
+    # Publishes the local sample video to the "demo" path (see cameras.json)
     command: >
       -re
       -stream_loop -1
@@ -37,4 +40,4 @@ services:
       -c:a aac
       -b:a 128k
       -f rtsp
-      rtsp://mediamtx:8554/live
+      rtsp://mediamtx:8554/demo

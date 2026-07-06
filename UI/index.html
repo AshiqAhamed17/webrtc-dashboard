@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC Camera Dashboard</title>
+    <title>Mini VMS — Live Camera Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -12,13 +12,17 @@
 
     <header class="dashboard-header">
         <div>
-            <h1>Live Camera Dashboard</h1>
-            <p class="dashboard-header__sub">MediaMTX &bull; WebRTC &bull; FFmpeg</p>
+            <h1>Mini VMS</h1>
+            <p class="dashboard-header__sub">Live RTSP &bull; MediaMTX &bull; WebRTC</p>
         </div>
         <div class="dashboard-header__stats">
             <div class="header-stat">
+                <span class="header-stat__label">Cameras</span>
+                <span class="header-stat__value" id="stat-cameras">—</span>
+            </div>
+            <div class="header-stat">
                 <span class="header-stat__label">Active</span>
-                <span class="header-stat__value" id="stat-active">0 / 4</span>
+                <span class="header-stat__value" id="stat-active">—</span>
             </div>
             <div class="header-stat">
                 <span class="header-stat__label">Total Reconnects</span>
@@ -30,7 +34,7 @@
     <main id="grid" class="grid"></main>
 
     <script src="reader.js"></script>
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=5"></script>
 
 </body>
 

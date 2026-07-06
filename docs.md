@@ -1,41 +1,32 @@
-# WebRTC Camera Dashboard
+# Mini VMS — WebRTC Camera Dashboard
 
-## Objective
-
-Build a simple single-page dashboard that plays **WebRTC video streams** in a tiled view using **MediaMTX** for restreaming a sample video.
-
----
-
-## Tech Stack
-
-- **FFmpeg** – Publishes the sample video as an RTSP stream
-- **MediaMTX** – Receives the RTSP stream and republishes it as WebRTC
-- **Docker** – Runs FFmpeg and MediaMTX
-- **HTML, CSS, JavaScript** – Frontend dashboard
-- **reader.js** – Official MediaMTX WebRTC client
+A lightweight **Video Management System** that ingests live RTSP camera feeds via MediaMTX and plays them in the browser over WebRTC.
 
 ---
 
 ## Architecture
 
 ```text
-sampleVid.mp4
-      │
-      ▼
-   FFmpeg
-      │
-   RTSP Stream
-      │
-      ▼
-  MediaMTX
-      │
- WebRTC Stream
-      │
-      ▼
- reader.js
-      │
-      ▼
-HTML Dashboard
+cameras.json  ──►  generate_mediamtx.py  ──►  mediamtx.yml
+                                                    │
+Live RTSP URLs ─────────────────────────────────────┤
+                                                    ▼
+                                              MediaMTX
+                                         (one path per camera)
+                                                    │
+                              WHEP / WebRTC  (per-camera endpoint)
+                                                    │
+                                                    ▼
+                                           Browser Dashboard
+                                         (one reader per tile)
+```
+
+Each camera gets its own MediaMTX path and WHEP endpoint:
+
+```text
+cam1  →  rtsp://camera1/...     →  http://localhost:8889/cam1/whep
+cam2  →  rtsp://camera2/...     →  http://localhost:8889/cam2/whep
+demo  →  FFmpeg publisher       →  http://localhost:8889/demo/whep
 ```
 
 ---
@@ -44,78 +35,64 @@ HTML Dashboard
 
 ```text
 webrtc-dashboard/
-│
+├── cameras.json              # Camera registry (edit this)
+├── mediamtx.yml                # Generated — do not edit manually
 ├── docker-compose.yml
-├── mediamtx.yml
-├── sampleVid.mp4
-│
+├── start.sh                    # Generate config + start Docker
+├── scripts/
+│   └── generate_mediamtx.py    # cameras.json → mediamtx.yml
 └── UI/
+    ├── cameras.json            # Copied from root (served to browser)
     ├── index.html
     ├── style.css
     ├── script.js
     └── reader.js
 ```
+
 ---
 
-## Dashboard
+## Quick Start
 
-![Dashboard](assets/dashboard.png)
+### 1. Configure cameras
 
+Edit `cameras.json` with your RTSP URLs:
 
-## Implementation Steps
-
-### 1. Setup MediaMTX
-
-Configured MediaMTX using `mediamtx.yml` to accept an RTSP publisher on the `live` path.
-
-### 2. Stream the Video
-
-Used FFmpeg to:
-
-- Read the sample video
-- Loop it continuously
-- Publish it to MediaMTX via RTSP
-
-Output stream:
-
-```text
-rtsp://mediamtx:8554/live
+```json
+{
+  "id": "cam1",
+  "name": "Front Entrance",
+  "path": "cam1",
+  "location": "Building A",
+  "type": "rtsp",
+  "rtspUrl": "rtsp://admin:password@192.168.1.10:554/stream1"
+}
 ```
 
-### 3. WebRTC Playback
+Camera types:
+- **`rtsp`** — MediaMTX pulls from the RTSP URL (your live cameras)
+- **`publisher`** — Something pushes RTSP to MediaMTX (the demo FFmpeg feed)
 
-MediaMTX republishes the RTSP stream as WebRTC.
-
-The frontend uses the official `reader.js` client to establish a WebRTC connection and receive the video stream.
-
-### 4. Dashboard UI
-
-Built a lightweight dashboard using:
-
-- HTML
-- CSS Grid
-- JavaScript
-
-The UI displays the stream in a responsive **2 × 2 tiled layout**.
-
----
-
-## Running the Project
-
-### Start MediaMTX & FFmpeg
+### 2. Generate config and start services
 
 ```bash
+./start.sh
+```
+
+Or manually:
+
+```bash
+python3 scripts/generate_mediamtx.py
 docker compose up
 ```
 
-### Start the UI
+### 3. Start the UI
 
 ```bash
 cd UI
 python3 -m http.server 5500
 ```
 
-### Open the Dashboard
+### 4. Open the dashboard
 
 ```text
 http://localhost:5500
@@ -123,20 +100,40 @@ http://localhost:5500
 
 ---
 
-## Result
+## Adding / Removing Cameras
 
-- Sample video streamed using FFmpeg
-- MediaMTX receives RTSP stream
-- MediaMTX republishes as WebRTC
-- Browser connects using `reader.js`
-- Live video displayed in a clean 2 × 2 dashboard
+1. Edit `cameras.json`
+2. Run `python3 scripts/generate_mediamtx.py`
+3. Restart MediaMTX: `docker compose restart mediamtx`
+4. Refresh the browser
+
+No code changes required.
 
 ---
 
-## Key Learnings
+## Demo Camera
 
-- Basics of FFmpeg publishing
-- RTSP and WebRTC streaming
-- MediaMTX as a media server
-- Docker-based media pipeline
-- Building a simple WebRTC dashboard
+The included `demo` camera uses FFmpeg to loop `sampleVid.mp4` into MediaMTX. Place `sampleVid.mp4` in the project root (it is gitignored).
+
+The three `cam1`–`cam3` entries are RTSP placeholders — replace `rtspUrl` with your real camera URLs.
+
+---
+
+## Ports
+
+| Port  | Service              |
+|-------|----------------------|
+| 8554  | RTSP                 |
+| 8888  | MediaMTX HTTP API    |
+| 8889  | WebRTC / WHEP        |
+| 8189  | WebRTC ICE (UDP)     |
+| 5500  | UI (python server)   |
+
+---
+
+## Tech Stack
+
+- **MediaMTX** — RTSP ingest + WebRTC republish
+- **FFmpeg** — Demo video publisher
+- **reader.js** — Official MediaMTX WebRTC client
+- **HTML / CSS / JavaScript** — Dashboard UI (no framework, no database)

@@ -1,13 +1,7 @@
 "use strict";
 
-const WHEP_URL = "http://localhost:8889/live/whep";
-
-const CAMERAS = [
-    { id: "cam1", name: "Camera 1" },
-    { id: "cam2", name: "Camera 2" },
-    { id: "cam3", name: "Camera 3" },
-    { id: "cam4", name: "Camera 4" },
-];
+let cameras = [];
+let mediamtxConfig = {};
 
 const STATUS = {
     LIVE: {
@@ -27,52 +21,124 @@ const STATUS = {
 const readers = [];
 const cameraStates = [];
 
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
 function formatTime() {
     return new Date().toLocaleTimeString();
 }
 
-function createCameraCard({ id, name }) {
+function buildWhepUrl(path) {
+    const { protocol, host, webrtcPort } = mediamtxConfig;
+    return `${protocol}://${host}:${webrtcPort}/${path}/whep`;
+}
+
+function sourceLabel(type) {
+    return type === "publisher" ? "Publisher" : "RTSP";
+}
+
+async function loadConfig() {
+    const response = await fetch("cameras.json");
+
+    if (!response.ok) {
+        throw new Error(`Failed to load cameras.json (${response.status})`);
+    }
+
+    const config = await response.json();
+
+    if (!config.cameras || !Array.isArray(config.cameras) || config.cameras.length === 0) {
+        throw new Error("cameras.json must contain a non-empty cameras array");
+    }
+
+    if (!config.mediamtx || !config.mediamtx.host || !config.mediamtx.webrtcPort) {
+        throw new Error("cameras.json must contain mediamtx.host and mediamtx.webrtcPort");
+    }
+
+    mediamtxConfig = {
+        protocol: config.mediamtx.protocol || "http",
+        host: config.mediamtx.host,
+        webrtcPort: config.mediamtx.webrtcPort,
+    };
+
+    cameras = config.cameras.map((cam) => ({
+        ...cam,
+        location: cam.location || "—",
+        whepUrl: buildWhepUrl(cam.path),
+    }));
+}
+
+function setGridLayout() {
+    const grid = document.getElementById("grid");
+    const count = cameras.length;
+
+    grid.classList.remove("grid--1", "grid--2", "grid--3", "grid--4");
+
+    if (count === 1) {
+        grid.classList.add("grid--1");
+    } else if (count === 2) {
+        grid.classList.add("grid--2");
+    } else if (count === 3) {
+        grid.classList.add("grid--3");
+    } else {
+        grid.classList.add("grid--4");
+    }
+}
+
+function createCameraCard(cam) {
+    const name = escapeHtml(cam.name);
+    const location = escapeHtml(cam.location);
+    const path = escapeHtml(cam.path);
+    const source = escapeHtml(sourceLabel(cam.type));
+
     return `
-        <article class="camera-card camera-card--reconnecting" id="card-${id}">
+        <article class="camera-card camera-card--reconnecting" id="card-${cam.id}">
             <div class="camera-card__header">
                 <div class="camera-card__title">
                     <span class="camera-card__icon" aria-hidden="true">⏺</span>
-                    <h2 class="camera-card__name">${name}</h2>
+                    <div>
+                        <h2 class="camera-card__name">${name}</h2>
+                        <p class="camera-card__location">${location}</p>
+                    </div>
                 </div>
-                <div class="badge badge--reconnecting" id="${id}-badge">
-                    <span class="badge-dot badge-dot--reconnecting" id="${id}-dot"></span>
-                    <span class="badge-label" id="${id}-label">RECONNECTING</span>
+                <div class="badge badge--reconnecting" id="${cam.id}-badge">
+                    <span class="badge-dot badge-dot--reconnecting" id="${cam.id}-dot"></span>
+                    <span class="badge-label" id="${cam.id}-label">RECONNECTING</span>
                 </div>
             </div>
 
             <div class="camera-card__video-wrap">
-                <video id="${id}" autoplay muted playsinline></video>
-                <div class="video-overlay" id="${id}-overlay">
+                <video id="${cam.id}" autoplay muted playsinline></video>
+                <div class="video-overlay" id="${cam.id}-overlay">
                     <span class="video-overlay__spinner"></span>
-                    <span id="${id}-overlay-msg">Connecting…</span>
+                    <span id="${cam.id}-overlay-msg">Connecting…</span>
                 </div>
             </div>
 
-            <div class="camera-card__event" id="${id}-event" data-type="waiting">
+            <div class="camera-card__event" id="${cam.id}-event" data-type="waiting">
                 Waiting for connection…
             </div>
 
             <div class="camera-card__meta">
                 <div class="meta-item">
                     <span class="meta-item__label">Source</span>
-                    <span class="meta-item__value">RTSP</span>
+                    <span class="meta-item__value">${source}</span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-item__label">Protocol</span>
                     <span class="meta-item__value">WebRTC</span>
                 </div>
                 <div class="meta-item">
-                    <span class="meta-item__label">Codec</span>
-                    <span class="meta-item__value">H.264</span>
+                    <span class="meta-item__label">Path</span>
+                    <span class="meta-item__value">${path}</span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-item__label">Reconnects</span>
-                    <span class="meta-item__value" id="${id}-reconnects">0</span>
+                    <span class="meta-item__value" id="${cam.id}-reconnects">0</span>
                 </div>
             </div>
         </article>
@@ -80,21 +146,23 @@ function createCameraCard({ id, name }) {
 }
 
 function buildGrid() {
-    document.getElementById("grid").innerHTML = CAMERAS.map(createCameraCard).join("");
+    const grid = document.getElementById("grid");
+    grid.innerHTML = cameras.map(createCameraCard).join("");
+    setGridLayout();
 }
 
-function getCameraState({ id }) {
+function getCameraState(cam) {
     return {
-        id,
-        card: document.getElementById(`card-${id}`),
-        video: document.getElementById(id),
-        badge: document.getElementById(`${id}-badge`),
-        badgeDot: document.getElementById(`${id}-dot`),
-        badgeLabel: document.getElementById(`${id}-label`),
-        overlay: document.getElementById(`${id}-overlay`),
-        overlayMsg: document.getElementById(`${id}-overlay-msg`),
-        eventLine: document.getElementById(`${id}-event`),
-        reconnectsEl: document.getElementById(`${id}-reconnects`),
+        ...cam,
+        card: document.getElementById(`card-${cam.id}`),
+        video: document.getElementById(cam.id),
+        badge: document.getElementById(`${cam.id}-badge`),
+        badgeDot: document.getElementById(`${cam.id}-dot`),
+        badgeLabel: document.getElementById(`${cam.id}-label`),
+        overlay: document.getElementById(`${cam.id}-overlay`),
+        overlayMsg: document.getElementById(`${cam.id}-overlay-msg`),
+        eventLine: document.getElementById(`${cam.id}-event`),
+        reconnectsEl: document.getElementById(`${cam.id}-reconnects`),
         reconnectCount: 0,
         isLive: false,
         track: null,
@@ -103,13 +171,14 @@ function getCameraState({ id }) {
 
 function updateHeaderStats() {
     const active = cameraStates.filter((c) => c.isLive).length;
-    const total = CAMERAS.length;
+    const total = cameras.length;
     const totalReconnects = cameraStates.reduce((sum, c) => sum + c.reconnectCount, 0);
 
     const activeEl = document.getElementById("stat-active");
     activeEl.textContent = `${active} / ${total}`;
     activeEl.dataset.level = active === total ? "ok" : active === 0 ? "down" : "partial";
 
+    document.getElementById("stat-cameras").textContent = String(total);
     document.getElementById("stat-reconnects").textContent = String(totalReconnects);
 }
 
@@ -122,7 +191,6 @@ function setStatus(camera, statusKey) {
     camera.badgeDot.className = `badge-dot ${dotClass}`;
     camera.badgeLabel.textContent = label;
 
-    // Hide overlay only when live; show spinner when reconnecting
     camera.overlay.hidden = camera.isLive;
     if (!camera.isLive) {
         camera.overlayMsg.textContent = camera.reconnectCount > 0 ? "Reconnecting…" : "Connecting…";
@@ -160,7 +228,7 @@ function handleTrack(camera, evt) {
 }
 
 function handleError(camera, err) {
-    console.warn(`[${camera.id}]`, err);
+    console.warn(`[${camera.id}] ${camera.whepUrl}`, err);
 
     camera.reconnectCount += 1;
     camera.reconnectsEl.textContent = String(camera.reconnectCount);
@@ -171,22 +239,42 @@ function handleError(camera, err) {
 
 function createReader(camera) {
     return new MediaMTXWebRTCReader({
-        url: WHEP_URL,
+        url: camera.whepUrl,
         onTrack: (evt) => handleTrack(camera, evt),
         onError: (err) => handleError(camera, err),
     });
 }
 
-function init() {
-    buildGrid();
+function showError(message) {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = `
+        <div class="error-state">
+            <h2>Configuration Error</h2>
+            <p>${escapeHtml(message)}</p>
+            <p class="error-state__hint">Make sure <code>cameras.json</code> exists in the UI folder. Run <code>python3 scripts/generate_mediamtx.py</code> first.</p>
+        </div>
+    `;
+}
 
-    CAMERAS.forEach((config) => {
-        const camera = getCameraState(config);
+function startReaders() {
+    cameras.forEach((cam) => {
+        const camera = getCameraState(cam);
         cameraStates.push(camera);
         readers.push(createReader(camera));
     });
 
     updateHeaderStats();
+}
+
+async function init() {
+    try {
+        await loadConfig();
+        buildGrid();
+        startReaders();
+    } catch (err) {
+        console.error(err);
+        showError(err.message);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
